@@ -22,6 +22,7 @@ parent/
     ├── initialize.sh
     ├── build.sh
     ├── up.sh
+    ├── down.sh
     ├── upgrade.sh
     ├── migrate.sh
     ├── backup.sh
@@ -66,6 +67,7 @@ To manage multiple environments use the instance argument:
 | `initialize.sh` | `./initialize.sh [instance]` | First-time setup: clone frappe_docker, prompt for config, write env file (with review pause), generate compose file |
 | `build.sh` | `./build.sh [instance]` | Build the custom ERPNext image using `apps.json` |
 | `up.sh` | `./up.sh [instance]` | Start all services (`docker compose up -d`) |
+| `down.sh` | `./down.sh [instance] [-v]` | Stop all services; `-v` also removes volumes (full teardown) |
 | `upgrade.sh` | `./upgrade.sh [instance]` | Pull frappe_docker updates, prompt for new tag, rebuild image, recreate containers, run migrations |
 | `migrate.sh` | `./migrate.sh [instance]` | Run `bench migrate` on all sites |
 | `backup.sh` | `./backup.sh [instance]` | Full backup (DB + files) for all sites, saved to `backups/<timestamp>/` |
