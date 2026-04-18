@@ -60,6 +60,7 @@ if [[ -f "$PRIVATE_FILE" ]]; then
 fi
 
 # Restore
+echo "Running: $RESTORE_CMD"
 docker compose -f "$COMPOSE_FILE" exec backend bash -c "$RESTORE_CMD"
 
 # Clean up from container
