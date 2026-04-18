@@ -41,7 +41,7 @@ for SITE in "${SITES[@]}"; do
       bench --site "$SITE" version &>/dev/null 2>&1; then
     echo "  Site already exists — skipping creation."
   else
-    echo "  Creating site..."
+    echo "  Running: bench new-site $SITE --db-root-password *** --admin-password *** --no-mariadb-socket"
     docker compose -f "$COMPOSE_FILE" exec -T backend \
       bench new-site "$SITE" \
         --db-root-password "$DB_PASSWORD" \
@@ -78,7 +78,7 @@ for SITE in "${SITES[@]}"; do
   for APP in $SELECTED_APPS; do
     APP="${APP// /}"
     [[ -z "$APP" ]] && continue
-    echo "  Installing $APP..."
+    echo "  Running: bench --site $SITE install-app $APP"
     docker compose -f "$COMPOSE_FILE" exec -T backend \
       bench --site "$SITE" install-app "$APP"
   done

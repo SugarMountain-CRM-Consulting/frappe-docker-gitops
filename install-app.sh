@@ -20,7 +20,7 @@ APPS=("$@")
 COMPOSE_FILE="$SCRIPT_DIR/${INSTANCE}.yaml"
 
 for APP in "${APPS[@]}"; do
-  echo "Installing $APP on $SITE..."
+  echo "Running: bench --site $SITE install-app $APP"
   docker compose -f "$COMPOSE_FILE" exec backend \
     bench --site "$SITE" install-app "$APP"
 done
