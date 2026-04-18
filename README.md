@@ -24,6 +24,8 @@ parent/
     ├── build.sh
     ├── up.sh
     ├── down.sh
+    ├── new-site.sh
+    ├── install-app.sh
     ├── upgrade.sh
     ├── migrate.sh
     ├── backup.sh
@@ -70,6 +72,8 @@ To manage multiple environments use the instance argument:
 | `build.sh` | `./build.sh [instance]` | Build the custom ERPNext image using `apps.json` |
 | `up.sh` | `./up.sh [instance]` | Start all services (`docker compose up -d`) |
 | `down.sh` | `./down.sh [instance] [-v]` | Stop all services; `-v` also removes volumes (full teardown) |
+| `new-site.sh` | `./new-site.sh [instance]` | Create sites from `NGINX_PROXY_HOSTS`, with interactive per-site app selection |
+| `install-app.sh` | `./install-app.sh <instance> <site> <app> [app...]` | Install one or more apps on an existing site |
 | `upgrade.sh` | `./upgrade.sh [instance]` | Pull frappe_docker updates, prompt for new tag, rebuild image, recreate containers, run migrations |
 | `migrate.sh` | `./migrate.sh [instance]` | Run `bench migrate` on all sites |
 | `backup.sh` | `./backup.sh [instance]` | Full backup (DB + files) for all sites, saved to `backups/<timestamp>/` |
@@ -91,6 +95,24 @@ To manage multiple environments use the instance argument:
 After the env file is written, the script **pauses** so you can review and edit it (e.g. `CLIENT_MAX_BODY_SIZE`, `PROXY_READ_TIMEOUT`, `FRAPPE_SITE_NAME_HEADER`) before the compose file is generated.
 
 The script shows which compose overrides are applied by default and lists all available overrides from `frappe_docker/overrides/` so you can regenerate the compose file with a different combination if needed.
+
+## Creating sites
+
+After the stack is up, create sites for all domains in `NGINX_PROXY_HOSTS`:
+
+```bash
+./new-site.sh               # or ./new-site.sh staging
+```
+
+The script prompts once for an admin password, then for each site:
+- Skips creation if the site already exists
+- Lists available apps from the bench and lets you choose which to install (comma-separated names, `all`, or blank to skip)
+
+To install additional apps on an existing site later:
+
+```bash
+./install-app.sh erpnext mysite.example.com erpnext hrms
+```
 
 ## Upgrading
 
