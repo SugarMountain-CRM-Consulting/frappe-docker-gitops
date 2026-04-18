@@ -87,19 +87,33 @@ fi
 
 cp "$FRAPPE_DOCKER_DIR/example.env" "$ENV_FILE"
 
-sed -i "s|ERPNEXT_VERSION=.*|ERPNEXT_VERSION=${ERPNEXT_VERSION}|" "$ENV_FILE"
-sed -i "s|DB_PASSWORD=123|DB_PASSWORD=${DB_PASSWORD}|"             "$ENV_FILE"
+# Update a variable if already present in the file, otherwise append it
+set_env_var() {
+  local key="$1" value="$2"
+  if grep -q "^${key}=" "$ENV_FILE"; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "$ENV_FILE"
+  else
+    echo "${key}=${value}" >> "$ENV_FILE"
+  fi
+}
 
-{
-  echo ""
-  echo "NGINX_PROXY_HOSTS=${NGINX_PROXY_HOSTS}"
-  echo "HTTP_PUBLISH_PORT=${HTTP_PUBLISH_PORT}"
-  echo "CUSTOM_IMAGE=${CUSTOM_IMAGE}"
-  echo "CUSTOM_TAG=${CUSTOM_TAG}"
-  echo "# PULL_POLICY: set to 'never' for locally built images (default for this setup)."
-  echo "# Change to 'always' or 'missing' if pulling from a remote registry (e.g. Docker Hub)."
-  echo "PULL_POLICY=never"
-} >> "$ENV_FILE"
+set_env_var "ERPNEXT_VERSION"  "$ERPNEXT_VERSION"
+set_env_var "DB_PASSWORD"      "$DB_PASSWORD"
+set_env_var "NGINX_PROXY_HOSTS" "$NGINX_PROXY_HOSTS"
+set_env_var "HTTP_PUBLISH_PORT" "$HTTP_PUBLISH_PORT"
+set_env_var "CUSTOM_IMAGE"     "$CUSTOM_IMAGE"
+set_env_var "CUSTOM_TAG"       "$CUSTOM_TAG"
+
+# PULL_POLICY: add comment only when appending (variable not in example.env)
+if grep -q "^PULL_POLICY=" "$ENV_FILE"; then
+  sed -i "s|^PULL_POLICY=.*|PULL_POLICY=never|" "$ENV_FILE"
+else
+  {
+    echo "# PULL_POLICY: set to 'never' for locally built images (default for this setup)."
+    echo "# Change to 'always' or 'missing' if pulling from a remote registry (e.g. Docker Hub)."
+    echo "PULL_POLICY=never"
+  } >> "$ENV_FILE"
+fi
 
 echo "Written: ${INSTANCE}.env"
 echo ""
