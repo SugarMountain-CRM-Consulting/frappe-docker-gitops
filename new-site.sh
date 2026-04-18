@@ -80,8 +80,8 @@ echo ""
 echo "Fixing MariaDB user hosts..."
 echo "  (Frappe binds DB users to the container IP at creation time — setting to '%' so"
 echo "   connections survive container restarts when Docker reassigns IP addresses.)"
-docker compose -f "$COMPOSE_FILE" exec -T db \
-  mariadb -uroot -p"$DB_PASSWORD" -e \
+docker compose -f "$COMPOSE_FILE" exec -T -e MYSQL_PWD="$DB_PASSWORD" db \
+  mariadb -uroot -e \
   "UPDATE mysql.user SET Host='%' WHERE Host NOT IN ('localhost','127.0.0.1','%') AND User NOT IN ('root','mariadb.sys'); FLUSH PRIVILEGES;"
 echo "  Done."
 
