@@ -12,14 +12,15 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-NGINX_PROXY_HOSTS=$(grep '^NGINX_PROXY_HOSTS=' "$ENV_FILE" | cut -d= -f2-)
-DB_PASSWORD=$(grep '^DB_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)
+NGINX_PROXY_HOSTS=$(grep '^NGINX_PROXY_HOSTS=' "$ENV_FILE" | cut -d= -f2- | tr -d '\r')
 
 if [[ -z "$NGINX_PROXY_HOSTS" ]]; then
   echo "Error: NGINX_PROXY_HOSTS is not set in ${INSTANCE}.env." >&2
   exit 1
 fi
 
+read -rsp "MariaDB root password: " DB_PASSWORD
+echo ""
 read -rsp "Admin password for new sites: " ADMIN_PASSWORD
 echo ""
 
@@ -47,6 +48,13 @@ for SITE in "${SITES[@]}"; do
         --admin-password "$ADMIN_PASSWORD" \
         --no-mariadb-socket
     echo "  Site created."
+    DB_USER=$(docker compose -f "$COMPOSE_FILE" exec -T backend \
+      python3 -c "import json; print(json.load(open('/home/frappe/frappe-bench/sites/${SITE}/site_config.json'))['db_name'])" \
+      | tr -d '\r')
+    echo "  Fixing DB host for user '$DB_USER'..."
+    docker compose -f "$COMPOSE_FILE" exec -T -e MYSQL_PWD="$DB_PASSWORD" db \
+      mariadb -uroot --verbose -e \
+      "UPDATE mysql.global_priv SET Host='%' WHERE User='${DB_USER}' AND Host != '%'; FLUSH PRIVILEGES; SELECT User, Host FROM mysql.global_priv WHERE User='${DB_USER}';"
   fi
 
   # App selection
@@ -75,15 +83,6 @@ for SITE in "${SITES[@]}"; do
       bench --site "$SITE" install-app "$APP"
   done
 done
-
-echo ""
-echo "Fixing MariaDB user hosts..."
-echo "  (Frappe binds DB users to the container IP at creation time — setting to '%' so"
-echo "   connections survive container restarts when Docker reassigns IP addresses.)"
-docker compose -f "$COMPOSE_FILE" exec -T -e MYSQL_PWD="$DB_PASSWORD" db \
-  mariadb -uroot -e \
-  "UPDATE mysql.user SET Host='%' WHERE Host NOT IN ('localhost','127.0.0.1','%') AND User NOT IN ('root','mariadb.sys'); FLUSH PRIVILEGES;"
-echo "  Done."
 
 echo ""
 echo "Done."

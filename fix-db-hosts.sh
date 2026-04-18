@@ -9,20 +9,46 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 INSTANCE="${1:-erpnext}"
-ENV_FILE="$SCRIPT_DIR/${INSTANCE}.env"
 COMPOSE_FILE="$SCRIPT_DIR/${INSTANCE}.yaml"
 
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Error: ${INSTANCE}.env not found." >&2
+if [[ ! -f "$COMPOSE_FILE" ]]; then
+  echo "Error: ${INSTANCE}.yaml not found." >&2
   exit 1
 fi
 
-DB_PASSWORD=$(grep '^DB_PASSWORD=' "$ENV_FILE" | cut -d= -f2-)
+echo "For each site this will run as MariaDB root:"
+echo ""
+echo "  UPDATE mysql.global_priv SET Host='%'"
+echo "    WHERE User='<site_db_user>' AND Host != '%';"
+echo "  FLUSH PRIVILEGES;"
+echo ""
+echo "Press Ctrl+C to cancel."
+echo ""
+read -rsp "MariaDB root password: " DB_PASSWORD
+echo ""
 
 echo "Fixing MariaDB user hosts for instance: $INSTANCE"
 
-docker compose -f "$COMPOSE_FILE" exec -T -e MYSQL_PWD="$DB_PASSWORD" db \
-  mariadb -uroot -e \
-  "UPDATE mysql.user SET Host='%' WHERE Host NOT IN ('localhost','127.0.0.1','%') AND User NOT IN ('root','mariadb.sys'); FLUSH PRIVILEGES;"
+SITES=$(docker compose -f "$COMPOSE_FILE" exec -T backend \
+  bash -c "for d in /home/frappe/frappe-bench/sites/*/; do [ -f \"\${d}site_config.json\" ] && basename \"\$d\"; done" \
+  | tr -d '\r')
 
+if [[ -z "$SITES" ]]; then
+  echo "No sites found." >&2
+  exit 1
+fi
+
+for SITE in $SITES; do
+  echo ""
+  echo "  Site: $SITE"
+  DB_USER=$(docker compose -f "$COMPOSE_FILE" exec -T backend \
+    python3 -c "import json; print(json.load(open('/home/frappe/frappe-bench/sites/${SITE}/site_config.json'))['db_name'])" \
+    | tr -d '\r')
+  echo "  DB user: $DB_USER"
+  docker compose -f "$COMPOSE_FILE" exec -T -e MYSQL_PWD="$DB_PASSWORD" db \
+    mariadb -uroot --verbose -e \
+    "UPDATE mysql.global_priv SET Host='%' WHERE User='${DB_USER}' AND Host != '%'; FLUSH PRIVILEGES; SELECT User, Host FROM mysql.global_priv WHERE User='${DB_USER}';"
+done
+
+echo ""
 echo "Done. Sites should now survive container restarts."
