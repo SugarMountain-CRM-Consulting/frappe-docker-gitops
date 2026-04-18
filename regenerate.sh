@@ -15,6 +15,7 @@ fi
 echo "Regenerating ${INSTANCE}.yaml from ${INSTANCE}.env..."
 
 docker compose \
+  --project-name "$INSTANCE" \
   --env-file "$ENV_FILE" \
   -f "$FRAPPE_DOCKER_DIR/compose.yaml" \
   -f "$FRAPPE_DOCKER_DIR/overrides/compose.mariadb.yaml" \

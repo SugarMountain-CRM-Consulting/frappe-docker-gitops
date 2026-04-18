@@ -130,6 +130,7 @@ echo "  See: https://github.com/frappe/frappe_docker/tree/main/docs"
 echo ""
 
 docker compose \
+  --project-name "$INSTANCE" \
   --env-file "$ENV_FILE" \
   -f "$FRAPPE_DOCKER_DIR/compose.yaml" \
   -f "$FRAPPE_DOCKER_DIR/overrides/compose.mariadb.yaml" \
