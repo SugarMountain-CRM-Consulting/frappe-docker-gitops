@@ -1,0 +1,6 @@
+*.env
+*.env.bak
+*.yaml
+!apps.json.example
+apps.json
+backups/
