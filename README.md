@@ -20,6 +20,7 @@ parent/
     ├── <instance>.yaml        generated compose file (git-ignored)
     ├── backups/               backup files from backup.sh (git-ignored)
     ├── initialize.sh
+    ├── regenerate.sh
     ├── build.sh
     ├── up.sh
     ├── down.sh
@@ -65,6 +66,7 @@ To manage multiple environments use the instance argument:
 | Script | Usage | What it does |
 |---|---|---|
 | `initialize.sh` | `./initialize.sh [instance]` | First-time setup: clone frappe_docker, prompt for config, write env file (with review pause), generate compose file |
+| `regenerate.sh` | `./regenerate.sh [instance]` | Regenerate the compose yaml from an existing env file (use after manually editing `<instance>.env`) |
 | `build.sh` | `./build.sh [instance]` | Build the custom ERPNext image using `apps.json` |
 | `up.sh` | `./up.sh [instance]` | Start all services (`docker compose up -d`) |
 | `down.sh` | `./down.sh [instance] [-v]` | Stop all services; `-v` also removes volumes (full teardown) |
