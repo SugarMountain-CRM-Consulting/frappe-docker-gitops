@@ -26,6 +26,7 @@ parent/
     ├── down.sh
     ├── new-site.sh
     ├── install-app.sh
+    ├── fix-db-hosts.sh
     ├── upgrade.sh
     ├── migrate.sh
     ├── backup.sh
@@ -74,6 +75,7 @@ To manage multiple environments use the instance argument:
 | `down.sh` | `./down.sh [instance] [-v]` | Stop all services; `-v` also removes volumes (full teardown) |
 | `new-site.sh` | `./new-site.sh [instance]` | Create sites from `NGINX_PROXY_HOSTS`, with interactive per-site app selection |
 | `install-app.sh` | `./install-app.sh <instance> <site> <app> [app...]` | Install one or more apps on an existing site |
+| `fix-db-hosts.sh` | `./fix-db-hosts.sh [instance]` | Fix MariaDB user hosts after container restarts cause DB connection failures |
 | `upgrade.sh` | `./upgrade.sh [instance]` | Pull frappe_docker updates, prompt for new tag, rebuild image, recreate containers, run migrations |
 | `migrate.sh` | `./migrate.sh [instance]` | Run `bench migrate` on all sites |
 | `backup.sh` | `./backup.sh [instance]` | Full backup (DB + files) for all sites, saved to `backups/<timestamp>/` |
@@ -113,6 +115,16 @@ To install additional apps on an existing site later:
 ```bash
 ./install-app.sh erpnext mysite.example.com erpnext hrms
 ```
+
+## MariaDB connection failures after restart
+
+Frappe binds each site's database user to the container's IP at creation time. When containers restart, Docker may reassign IPs, causing authentication failures. `new-site.sh` fixes this automatically after creating sites. For existing installations, run:
+
+```bash
+./fix-db-hosts.sh               # or ./fix-db-hosts.sh staging
+```
+
+This updates all site DB users to allow connections from any host (`%`), which is safe since MariaDB is not exposed outside the Docker network.
 
 ## Upgrading
 
