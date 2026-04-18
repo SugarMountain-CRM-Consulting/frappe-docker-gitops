@@ -14,9 +14,7 @@ git -C "$FRAPPE_DOCKER_DIR" pull
 
 # ── Prompt for new image tag ──────────────────────────────────────────────────
 
-source "$ENV_FILE"
-
-CURRENT_TAG="${CUSTOM_TAG:-}"
+CURRENT_TAG=$(grep '^CUSTOM_TAG=' "$ENV_FILE" | cut -d= -f2-)
 read -rp "New image tag [$CURRENT_TAG]: " NEW_TAG
 NEW_TAG="${NEW_TAG:-$CURRENT_TAG}"
 

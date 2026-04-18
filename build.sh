@@ -7,7 +7,8 @@ FRAPPE_DOCKER_DIR="$(realpath "$SCRIPT_DIR/../frappe_docker")"
 INSTANCE="${1:-erpnext}"
 ENV_FILE="$SCRIPT_DIR/${INSTANCE}.env"
 
-source "$ENV_FILE"
+CUSTOM_IMAGE=$(grep '^CUSTOM_IMAGE=' "$ENV_FILE" | cut -d= -f2-)
+CUSTOM_TAG=$(grep '^CUSTOM_TAG=' "$ENV_FILE" | cut -d= -f2-)
 
 docker build \
   --secret id=apps_json,src="$SCRIPT_DIR/apps.json" \
