@@ -38,7 +38,7 @@ for SITE in "${SITES[@]}"; do
 
   # Check if site already exists
   if docker compose -f "$COMPOSE_FILE" exec -T backend \
-      bench --site "$SITE" version &>/dev/null 2>&1; then
+      test -f "/home/frappe/frappe-bench/sites/${SITE}/site_config.json" 2>/dev/null; then
     echo "  Site already exists — skipping creation."
   else
     echo "  Running: bench new-site $SITE --db-root-password *** --admin-password *** --no-mariadb-socket"
