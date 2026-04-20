@@ -27,6 +27,7 @@ parent/
     ├── new-site.sh
     ├── install-app.sh
     ├── fix-db-hosts.sh
+    ├── show-config.sh
     ├── bench.sh
     ├── db.sh
     ├── upgrade.sh
@@ -78,6 +79,7 @@ To manage multiple environments use the instance argument:
 | `new-site.sh` | `./new-site.sh [instance]` | Create sites from `NGINX_PROXY_HOSTS`, with interactive per-site app selection |
 | `install-app.sh` | `./install-app.sh <instance> <site> <app> [app...]` | Install one or more apps on an existing site |
 | `fix-db-hosts.sh` | `./fix-db-hosts.sh [instance]` | Fix MariaDB user hosts after container restarts cause DB connection failures |
+| `show-config.sh` | `./show-config.sh [instance]` | Print common_site_config.json and each site's site_config.json |
 | `bench.sh` | `./bench.sh [instance]` | Open an interactive shell in the backend container at the bench directory |
 | `db.sh` | `./db.sh [instance]` | Open an interactive MariaDB root shell |
 | `upgrade.sh` | `./upgrade.sh [instance]` | Pull frappe_docker updates, prompt for new tag, rebuild image, recreate containers, run migrations |
