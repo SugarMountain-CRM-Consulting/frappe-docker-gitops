@@ -41,12 +41,12 @@ for SITE in "${SITES[@]}"; do
       test -f "/home/frappe/frappe-bench/sites/${SITE}/site_config.json" 2>/dev/null; then
     echo "  Site already exists — skipping creation."
   else
-    echo "  Running: bench new-site $SITE --db-root-password *** --admin-password *** --no-mariadb-socket"
+    echo "  Running: bench new-site $SITE --db-root-password *** --admin-password *** --mariadb-user-host-login-scope='%'"
     docker compose -f "$COMPOSE_FILE" exec -T backend \
       bench new-site "$SITE" \
         --db-root-password "$DB_PASSWORD" \
         --admin-password "$ADMIN_PASSWORD" \
-        --no-mariadb-socket
+        --mariadb-user-host-login-scope='%'
     echo "  Site created."
     DB_USER=$(docker compose -f "$COMPOSE_FILE" exec -T backend \
       python3 -c "import json; print(json.load(open('/home/frappe/frappe-bench/sites/${SITE}/site_config.json'))['db_name'])" \
