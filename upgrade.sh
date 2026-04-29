@@ -49,6 +49,12 @@ echo ""
 echo "Recreating containers..."
 docker compose -f "$SCRIPT_DIR/${INSTANCE}.yaml" up -d --force-recreate
 
+# ── Sync assets ──────────────────────────────────────────────────────────────
+
+echo ""
+echo "Syncing asset hashes..."
+"$SCRIPT_DIR/sync-assets.sh" "$INSTANCE"
+
 # ── Migrate ───────────────────────────────────────────────────────────────────
 
 echo ""

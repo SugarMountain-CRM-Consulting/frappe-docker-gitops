@@ -32,6 +32,7 @@ parent/
     ├── db.sh
     ├── upgrade.sh
     ├── migrate.sh
+    ├── sync-assets.sh
     ├── backup.sh
     ├── restore.sh
     ├── lint.sh
@@ -73,7 +74,7 @@ To manage multiple environments use the instance argument:
 |---|---|---|
 | `initialize.sh` | `./initialize.sh [instance]` | First-time setup: clone frappe_docker, prompt for config, write env file (with review pause), generate compose file |
 | `regenerate.sh` | `./regenerate.sh [instance]` | Regenerate the compose yaml from an existing env file (use after manually editing `<instance>.env`) |
-| `build.sh` | `./build.sh [instance]` | Build the custom ERPNext image using `apps.json` |
+| `build.sh` | `./build.sh [instance] [--fast]` | Build the custom ERPNext image using `apps.json`. Defaults to a full `--no-cache` rebuild. Pass `--fast` to only bust the `bench init` layer and reuse cached OS/dependency layers — useful when iterating on `apps.json` without a `Containerfile` change. |
 | `up.sh` | `./up.sh [instance]` | Start all services (`docker compose up -d`) |
 | `down.sh` | `./down.sh [instance] [-v]` | Stop all services; `-v` also removes volumes (full teardown) |
 | `new-site.sh` | `./new-site.sh [instance]` | Create sites from `NGINX_PROXY_HOSTS`, with interactive per-site app selection |
@@ -82,8 +83,9 @@ To manage multiple environments use the instance argument:
 | `show-config.sh` | `./show-config.sh [instance]` | Print common_site_config.json and each site's site_config.json |
 | `bench.sh` | `./bench.sh [instance]` | Open an interactive shell in the backend container at the bench directory |
 | `db.sh` | `./db.sh [instance]` | Open an interactive MariaDB root shell |
-| `upgrade.sh` | `./upgrade.sh [instance]` | Pull frappe_docker updates, prompt for new tag, rebuild image, recreate containers, run migrations |
+| `upgrade.sh` | `./upgrade.sh [instance]` | Pull frappe_docker updates, prompt for new tag, rebuild image, recreate containers, sync asset hashes, run migrations |
 | `migrate.sh` | `./migrate.sh [instance]` | Run `bench migrate` on all sites |
+| `sync-assets.sh` | `./sync-assets.sh [instance]` | Resync `assets.json` with the hashed files in the running image (see [Asset hash mismatch](#asset-hash-mismatch)) |
 | `backup.sh` | `./backup.sh [instance]` | Full backup (DB + files) for all sites, saved to `backups/<timestamp>/` |
 | `restore.sh` | `./restore.sh <instance> <site> <backup-file>` | Restore a site from a host-side backup file |
 | `lint.sh` | `./lint.sh` | Syntax-check all scripts and smoke-test `initialize.sh` |
@@ -138,7 +140,23 @@ This updates all site DB users to allow connections from any host (`%`), which i
 ./upgrade.sh              # or ./upgrade.sh staging
 ```
 
-Prompts for the new image tag. Handles everything: pulling frappe_docker updates, rebuilding the image, regenerating the compose config, restarting containers, running migrations.
+Prompts for the new image tag. Handles everything: pulling frappe_docker updates, rebuilding the image, regenerating the compose config, restarting containers, syncing asset hashes, and running migrations.
+
+If you are iterating quickly on `apps.json` and the `Containerfile` itself has not changed, you can skip the full layer rebuild with `--fast`:
+
+```bash
+./build.sh erpnext --fast
+```
+
+## Asset hash mismatch
+
+After deploying a rebuilt image you may see CSS/JS assets fail to load in the browser (404s). This happens because the persistent `sites/` Docker volume retains the old `assets.json` (which maps bundle names to content-hashed filenames), while the new image contains freshly compiled files with different hashes. The `upgrade.sh` script handles this automatically, but if you deploy manually (e.g. `build.sh` → `down.sh` → `up.sh`) you may need to run it yourself:
+
+```bash
+./sync-assets.sh              # or ./sync-assets.sh staging
+```
+
+This runs `bench build --using-cached` inside the backend container — it rescans the compiled dist files and rewrites `assets.json` to match in a few seconds, without recompiling anything.
 
 ## Backup & restore
 
