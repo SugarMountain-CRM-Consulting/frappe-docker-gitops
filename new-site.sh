@@ -24,6 +24,8 @@ echo ""
 read -rsp "Admin password for new sites: " ADMIN_PASSWORD
 echo ""
 
+CREATED_ANY=false
+
 # Get list of available apps in the bench
 AVAILABLE_APPS=$(docker compose -f "$COMPOSE_FILE" exec -T backend \
   bash -c "ls /home/frappe/frappe-bench/apps/" | tr -d '\r')
@@ -48,6 +50,7 @@ for SITE in "${SITES[@]}"; do
         --admin-password "$ADMIN_PASSWORD" \
         --mariadb-user-host-login-scope='%'
     echo "  Site created."
+    CREATED_ANY=true
     DB_USER=$(docker compose -f "$COMPOSE_FILE" exec -T backend \
       python3 -c "import json; print(json.load(open('/home/frappe/frappe-bench/sites/${SITE}/site_config.json'))['db_name'])" \
       | tr -d '\r')
@@ -86,3 +89,9 @@ done
 
 echo ""
 echo "Done."
+
+if [[ "$CREATED_ANY" == true ]]; then
+  echo "New site(s) created — regenerating compose file and applying..."
+  "$SCRIPT_DIR/regenerate.sh" "$INSTANCE"
+  docker compose -f "$COMPOSE_FILE" up -d
+fi
