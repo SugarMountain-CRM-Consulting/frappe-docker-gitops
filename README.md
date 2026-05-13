@@ -33,6 +33,7 @@ parent/
     ├── upgrade.sh
     ├── migrate.sh
     ├── sync-assets.sh
+    ├── scheduler-switch.sh
     ├── backup.sh
     ├── restore.sh
     ├── lint.sh
@@ -86,6 +87,7 @@ To manage multiple environments use the instance argument:
 | `upgrade.sh` | `./upgrade.sh [instance]` | Pull frappe_docker updates, prompt for new tag, rebuild image, recreate containers, sync asset hashes, run migrations |
 | `migrate.sh` | `./migrate.sh [instance]` | Run `bench migrate` on all sites |
 | `sync-assets.sh` | `./sync-assets.sh [instance]` | Resync `assets.json` with the hashed files in the running image (see [Asset hash mismatch](#asset-hash-mismatch)) |
+| `scheduler-switch.sh` | `./scheduler-switch.sh <instance> <on\|off> [site...]` | Enable or disable the Frappe scheduler for all sites (or specific ones). Restarts the scheduler container afterward. |
 | `backup.sh` | `./backup.sh [instance]` | Full backup (DB + files) for all sites, saved to `backups/<timestamp>/` |
 | `restore.sh` | `./restore.sh <instance> <site> <backup-file>` | Restore a site from a host-side backup file |
 | `lint.sh` | `./lint.sh` | Syntax-check all scripts and smoke-test `initialize.sh` |
@@ -133,6 +135,23 @@ Frappe binds each site's database user to the container's IP at creation time. W
 ```
 
 This updates all site DB users to allow connections from any host (`%`), which is safe since MariaDB is not exposed outside the Docker network.
+
+## Scheduled jobs
+
+Frappe's `scheduler` container runs `bench schedule`, which enqueues due jobs into Redis for the workers to execute. Jobs defined in `hooks.py` (under `scheduler_events`) are synced to the `Scheduled Job Type` doctype when an app is installed.
+
+The scheduler must be explicitly enabled per site. After creating a site and installing apps, run:
+
+```bash
+./scheduler-switch.sh ckm on          # all sites from NGINX_PROXY_HOSTS
+./scheduler-switch.sh ckm on mysite.example.com   # specific site only
+```
+
+To verify jobs are firing, open `/desk#List/Scheduled Job Type/List` in the browser — the **Last Execution** column should update within a minute or two. You can also disable the scheduler temporarily (e.g. during maintenance):
+
+```bash
+./scheduler-switch.sh ckm off
+```
 
 ## Upgrading
 

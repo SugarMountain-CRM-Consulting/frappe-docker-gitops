@@ -95,3 +95,9 @@ if [[ "$CREATED_ANY" == true ]]; then
   "$SCRIPT_DIR/regenerate.sh" "$INSTANCE"
   docker compose -f "$COMPOSE_FILE" up -d
 fi
+
+echo ""
+echo "────────────────────────────────────────────────────────────────"
+echo "  Don't forget to enable the scheduler for your new site(s):"
+echo "    ./scheduler-switch.sh $INSTANCE on"
+echo "────────────────────────────────────────────────────────────────"
